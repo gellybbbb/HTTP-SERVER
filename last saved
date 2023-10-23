@@ -1,0 +1,53 @@
+import https from 'https';
+import fs from 'fs';
+import { IncomingMessage } from 'http';
+
+// Define an interface for user data
+interface UserData {
+    firstName: string;
+    lastName: string;
+}
+
+const userData: UserData[] = [];
+
+const data: UserData = {
+    firstName: 'Morisette',
+    lastName: 'Santillan'
+};
+
+const options = {
+    hostname: 'reqres.in',
+    path: '/api/users',
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': JSON.stringify(data).length
+    }
+};
+
+const req = https.request(options, (res: IncomingMessage) => {
+    let responseData = '';
+
+    console.log('Status Code:', res.statusCode);
+
+    res.on('data', (chunk) => {
+        responseData += chunk;
+    });
+
+    res.on('end', () => {
+        const parsedResponse = JSON.parse(responseData);
+        console.log('Response Body:', parsedResponse);
+
+        // Add the user data to the array
+        userData.push(data);
+
+        // Save the user data to a JSON file
+        fs.writeFileSync('./data.json', JSON.stringify(userData));
+    });
+
+}).on("error", (err: NodeJS.ErrnoException) => {
+    console.log("Error: ", err.message);
+});
+
+req.write(JSON.stringify(data));
+req.end();
